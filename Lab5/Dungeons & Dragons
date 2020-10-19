@@ -1,0 +1,163 @@
+import pygame
+from pygame.draw import *
+from random import randint
+pygame.init()
+# Переменные для изображения счета
+font = pygame.font.Font(None, 80)
+FPS = 50
+width = 800
+length = 830
+# Создание экрана
+pygame.display.set_caption('Dungeons & Dragons')
+screen = pygame.display.set_mode((width, length))
+# Ввод имени игрока
+name = input('Your name: ')
+# Кортеж цвета, который будет использован в игре
+RED = (255, 0, 0)
+# Загрузка и расположение фоновой картинки
+back_position = [0, -150]
+back_image = pygame.image.load('3.jpg').convert()
+# Загрузка фоновой музыки
+pygame.mixer.music.load('Паладин-2017.ogg')
+pygame.mixer.music.play(loops=-1)
+
+
+# Класс, в котором находятся фукции, необходимые для движения объектов
+class Target:
+    def __init__(self, screen, width, length):
+        '''
+        Функция задает начальные координаты объектов и их скорость 
+        self - ссылка на объект 
+        screen - объект pygame.display
+        width - ширина окна игры
+        length - длина окна игры 
+        '''
+        self.x = randint(100, width)
+        self.y = randint(100, length)
+        self.screen = screen
+        self.v_x = randint(-3, 3)
+        self.v_y = randint(-3, 3)
+        self.rect = (self.x, self.y)
+        
+    
+    def move(self):
+        '''
+        Функция задает равномерное движение объектов
+        self - ссылка на объект 
+        '''
+        self.x += self.v_x
+        self.y += self.v_y
+        self.rect = (self.x, self.y)
+        
+        
+    def check_border(self, width, length):
+        '''
+        Функция задает отражение от стен
+        self - ссылка на объект 
+        width - ширина окна игры
+        length - длина окна игры 
+        '''
+        if self.x + self.v_x <= 0 or self.x + self.v_x + self.scal >= width:
+            self.v_x = -self.v_x
+        if self.y + self.v_y <= 0 or  self.y + self.v_y + self.scal >= length:
+            self.v_y = -self.v_y
+
+
+# Класс объектов             
+class Pictures(Target):
+    def __init__(self, screen, width, length):
+        '''
+        Функция загружает изображения, 
+        задает их размеры, начальные координаты и скорость
+        self - ссылка на объект 
+        screen - объект pygame.display
+        width - ширина окна игры
+        length - длина окна игры 
+        '''
+        super().__init__(screen, width, length)
+        if randint(0, 1):
+            self.image = pygame.image.load('1.png')
+            self.coefficient = 1
+            self.scal = randint(100, 200)
+        else:
+            self.image = pygame.image.load('2.png')
+            self.coefficient = 2 
+            self.scal = randint(50, 100)
+        self.rect = self.image.get_rect()
+        self.image = pygame.transform.scale(self.image, (self.scal, self.scal))
+        
+        
+    def draw(self):
+        ''''
+        Функция рисует объекты
+        self - ссылка на объект
+        '''
+        screen.blit(self.image, self.rect)
+    
+    
+    def check_event(self, coords):
+        '''
+        Функция определяет попадаем ли мы мышкой на объект или нет
+        self - ссылка на объект
+        coords - координаты мышки во время клика
+        '''
+        x_m, y_m = coords
+        if x_m >= self.x and x_m <= self.x + self.scal:
+            condition_x = True
+        else:
+            condition_x = False
+        if self.y <= y_m and self.y + self.scal >= y_m:
+            condition_y = True
+        else:
+            condition_y = False
+        if  condition_x and condition_y:
+            return True
+        else:
+            return False
+        
+        
+# Функция, рисующая счет        
+def score(Score):
+    '''
+    Функция пишет в углу счет игрока
+    Score - количество набранных игроком очков 
+    '''
+    text = font.render("Score: " + str(Score), True, RED)
+    screen.blit(text, (10, 10))
+
+
+clock = pygame.time.Clock()
+finished = False
+Score =  0 
+# Количество изображений, одновременно находящихся на экране 
+pictures = [Pictures(screen, width, length) for i in range(10)]
+
+
+# Создание изображений и их исчезание после щелчка мыши 
+while not finished:
+    clock.tick(FPS)
+    screen.blit(back_image, back_position)
+    for picture in pictures:
+        picture.check_border(width, length) 
+        picture.move()
+        picture.draw() 
+    score(Score)  
+    
+    pygame.display.flip()
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            finished = True
+        elif event.type == pygame.MOUSEBUTTONDOWN:
+            for i, picture in enumerate(pictures):
+                if picture.check_event(event.pos):
+                    Score += picture.coefficient
+                    pictures.pop(i)
+                    pictures.append(Pictures(screen, width, length))   
+                    
+                    
+# Занесение результатов игры в файл                   
+file = open('results.txt', 'a')
+file.write(name +': ' + str(Score) + '\n')
+file.close()
+    
+pygame.quit()
