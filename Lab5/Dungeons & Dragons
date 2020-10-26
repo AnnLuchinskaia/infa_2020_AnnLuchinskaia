@@ -1,3 +1,5 @@
+# Ввод имени игрока
+name = input('Your name: ')
 import pygame
 from pygame.draw import *
 from random import randint
@@ -10,8 +12,6 @@ length = 830
 # Создание экрана
 pygame.display.set_caption('Dungeons & Dragons')
 screen = pygame.display.set_mode((width, length))
-# Ввод имени игрока
-name = input('Your name: ')
 # Кортеж цвета, который будет использован в игре
 RED = (255, 0, 0)
 # Загрузка и расположение фоновой картинки
