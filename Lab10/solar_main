@@ -6,6 +6,8 @@ from tkinter.filedialog import *
 from solar_vis import *
 from solar_model import *
 from solar_input import *
+from math import *
+import matplotlib.pyplot as plt
 
 perform_execution = False
 """Флаг цикличности выполнения расчёта"""
@@ -36,6 +38,7 @@ def execution():
     global displayed_time
     recalculate_space_objects_positions(space_objects, time_step.get())
     for body in space_objects:
+        adding_statistics('stats.txt', space_objects[1], space_objects[0], physical_time)
         update_object_position(space, body)
     physical_time += time_step.get()
     displayed_time.set("%.1f" % physical_time + " seconds gone")
@@ -92,6 +95,25 @@ def open_file_dialog():
             raise AssertionError()
 
 
+def draws_graphs(list1, list2, list3):
+    '''Рисует графики скорости и растояния от времени, скорости от расстояния
+    Параметры:
+    **list1** - упорядоченный список значений времени
+    **list2** - упорядоченный список значений модуля скорости
+    **list3** - упорядоченный список значений расстояния
+    '''
+    x = list1
+    y1 = list2
+    y2 = list3
+    fig, axs = plt.subplots(1, 3, figsize=(12, 6))
+    axs[0].plot(x, y1, label='Скорость от времени')
+    axs[1].plot(x, y2, label='Расстояние от времени')
+    axs[2].plot(y1, y2, label='Скорость от расстояния')
+    for ax in axs:
+        ax.legend()
+    plt.show()
+
+
 def save_file_dialog():
     """Открывает диалоговое окно выбора имени файла и вызывает
     функцию считывания параметров системы небесных тел из данного файла.
@@ -117,11 +139,13 @@ def main():
 
     root = tkinter.Tk()
     # космическое пространство отображается на холсте типа Canvas
-    space = tkinter.Canvas(root, width=window_width, height=window_height, bg="black")
+    space = tkinter.Canvas(root, width=window_width, height=window_height, bg="white")
     space.pack(side=tkinter.TOP)
     # нижняя панель с кнопками
     frame = tkinter.Frame(root)
+    label_a = tkinter.Label(master=frame, text="I'm in Frame A")
     frame.pack(side=tkinter.BOTTOM)
+    open('stats.txt', 'w').close()
 
     start_button = tkinter.Button(frame, text="Start", command=start_execution, width=6)
     start_button.pack(side=tkinter.LEFT)
@@ -144,9 +168,11 @@ def main():
     displayed_time.set(str(physical_time) + " seconds gone")
     time_label = tkinter.Label(frame, textvariable=displayed_time, width=30)
     time_label.pack(side=tkinter.RIGHT)
-
     root.mainloop()
     print('Modelling finished!')
 
+
 if __name__ == "__main__":
     main()
+    a, b, c = statistics_read('stats.txt')
+    draws_graphs(a, b, c)
